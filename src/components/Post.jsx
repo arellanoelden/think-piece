@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useContext } from "react";
 
-import moment from 'moment';
+import moment from "moment";
+import { firestore } from "../firebase";
+import { UserContext } from "../providers/UserProvider";
+import { Link } from "react-router-dom";
 
-const Post = ({ title, content, user, createdAt, stars, comments }) => {
+const belongsToCurrentUser = (currentUser, postAuthor) => {
+  if (!currentUser) return false;
+  return currentUser.uid === postAuthor.uid;
+};
+
+const Post = ({ title, content, id, createdAt, user, stars, comments }) => {
+  const currentUser = useContext(UserContext);
+
+  const postRef = firestore.doc(`posts/${id}`);
+  const remove = () => postRef.delete();
+  const star = () => postRef.update({ stars: stars + 1 });
+
   return (
     <article className="Post">
       <div className="Post--content">
-        <h3>{title}</h3>
+        <Link to={`/posts/${id}`}>
+          <h3>{title}</h3>
+        </Link>
         <div>{content}</div>
       </div>
       <div className="Post--meta">
@@ -27,8 +43,14 @@ const Post = ({ title, content, user, createdAt, stars, comments }) => {
           <p>{moment(createdAt).calendar()}</p>
         </div>
         <div>
-          <button className="star">Star</button>
-          <button className="delete">Delete</button>
+          <button className="star" onClick={star}>
+            Star
+          </button>
+          {belongsToCurrentUser(currentUser, user) && (
+            <button className="delete" onClick={remove}>
+              Delete
+            </button>
+          )}
         </div>
       </div>
     </article>
@@ -36,18 +58,18 @@ const Post = ({ title, content, user, createdAt, stars, comments }) => {
 };
 
 Post.defaultProps = {
-  title: 'An Incredibly Hot Take',
+  title: "An Incredibly Hot Take",
   content:
-    'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Ducimus est aut dolorem, dolor voluptatem assumenda possimus officia blanditiis iusto porro eaque non ab autem nihil! Alias repudiandae itaque quo provident.',
+    "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Ducimus est aut dolorem, dolor voluptatem assumenda possimus officia blanditiis iusto porro eaque non ab autem nihil! Alias repudiandae itaque quo provident.",
   user: {
-    id: '123',
-    displayName: 'Bill Murray',
-    email: 'billmurray@mailinator.com',
-    photoURL: 'https://www.fillmurray.com/300/300',
+    id: "123",
+    displayName: "Bill Murray",
+    email: "billmurray@mailinator.com",
+    photoURL: "https://www.fillmurray.com/300/300"
   },
   createdAt: new Date(),
   stars: 0,
-  comments: 0,
+  comments: 0
 };
 
 export default Post;
